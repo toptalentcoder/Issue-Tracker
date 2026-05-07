@@ -18,16 +18,23 @@ class IssueController extends Controller
         }
 
         if ($request->filled('category')) {
-            $query->where('category', $request->category);
+            $query->whereRaw('lower(category) = ?', [strtolower($request->category)]);
         }
 
         if ($request->filled('priority')) {
             $query->where('priority', $request->priority);
         }
 
-        return IssueResource::collection(
-            $query->latest()->get()
-        );
+        $issues = $query->latest()->get();
+
+        if (! $request->expectsJson()) {
+            return view('api.issues.index', [
+                'issues' => $issues,
+                'filters' => $request->only(['status', 'category', 'priority']),
+            ]);
+        }
+
+        return IssueResource::collection($issues);
     }
 
     public function store(Request $request, IssueAutomationService $automation)
@@ -42,6 +49,7 @@ class IssueController extends Controller
         ]);
 
         $data['status'] = $data['status'] ?? 'open';
+        $data['due_at'] = $data['due_at'] ?? now();
 
         $automationData = $automation->processIssue($data);
 
@@ -54,6 +62,12 @@ class IssueController extends Controller
 
     public function show(Issue $issue)
     {
+        if (! request()->expectsJson()) {
+            return view('api.issues.show', [
+                'issue' => $issue,
+            ]);
+        }
+
         return new IssueResource($issue);
     }
 

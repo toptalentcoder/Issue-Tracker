@@ -1,17 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Issues')
+@section('title', 'API · Issues')
 
 @section('content')
     <div class="flex flex-col gap-6">
-        <div class="flex items-start justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-semibold tracking-tight">Issues</h1>
-                <p class="mt-1 text-sm text-slate-600">Filter, review, and triage incoming support requests.</p>
-            </div>
-        </div>
 
-        <form method="GET" action="{{ route('issues.index') }}"
+
+        <form method="GET" action="{{ url('/api/issues') }}"
               class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <label class="block">
@@ -49,18 +44,21 @@
 
                 <div class="flex items-end gap-2">
                     <button type="submit"
-                            class="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2">
+                            class="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800">
                         Apply
                     </button>
-                    <a href="{{ route('issues.index') }}"
-                       class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2">
+                    <a href="{{ url('/api/issues') }}"
+                       class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
                         Reset
                     </a>
                 </div>
             </div>
         </form>
 
-        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                <div class="text-sm font-semibold text-slate-900">Results</div>
+            </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-slate-200">
                     <thead class="bg-slate-50">
@@ -69,8 +67,6 @@
                         <th class="px-4 py-3">Priority</th>
                         <th class="px-4 py-3">Status</th>
                         <th class="px-4 py-3">Category</th>
-                        <th class="px-4 py-3">Summary</th>
-                        <th class="px-4 py-3">Next action</th>
                         <th class="px-4 py-3">Escalation</th>
                     </tr>
                     </thead>
@@ -79,37 +75,14 @@
                         <tr class="hover:bg-slate-50/70">
                             <td class="px-4 py-3">
                                 <a class="font-semibold text-slate-900 hover:text-indigo-700"
-                                   href="{{ route('issues.show', $issue) }}">
+                                   href="{{ url('/api/issues/'.$issue->id) }}">
                                     {{ $issue->title }}
                                 </a>
-                                <div class="mt-1 text-xs text-slate-500">
-                                    Created {{ $issue->created_at?->diffForHumans() }}
-                                </div>
+                                <div class="mt-1 max-w-xl text-xs text-slate-500 line-clamp-2">{{ $issue->summary }}</div>
                             </td>
-                            <td class="px-4 py-3">
-                                <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold
-                                    @class([
-                                        'bg-slate-100 text-slate-700' => $issue->priority === 'low' || $issue->priority === 'medium',
-                                        'bg-amber-100 text-amber-800' => $issue->priority === 'high',
-                                        'bg-rose-100 text-rose-800' => $issue->priority === 'critical',
-                                    ])">
-                                    {{ $issue->priority }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                                    {{ str_replace('_', ' ', $issue->status) }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="text-sm text-slate-700">{{ $issue->category }}</span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="max-w-md text-sm text-slate-700 line-clamp-3">{{ $issue->summary }}</div>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="max-w-md text-sm text-slate-700 line-clamp-3">{{ $issue->suggested_action }}</div>
-                            </td>
+                            <td class="px-4 py-3 text-sm text-slate-700">{{ $issue->priority }}</td>
+                            <td class="px-4 py-3 text-sm text-slate-700">{{ str_replace('_', ' ', $issue->status) }}</td>
+                            <td class="px-4 py-3 text-sm text-slate-700">{{ $issue->category }}</td>
                             <td class="px-4 py-3">
                                 @if($issue->escalation_required)
                                     <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700">
@@ -126,8 +99,8 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-10 text-center text-sm text-slate-600">
-                                No issues found. Try adjusting filters or submit a new issue.
+                            <td colspan="5" class="px-4 py-10 text-center text-sm text-slate-600">
+                                No issues found.
                             </td>
                         </tr>
                     @endforelse

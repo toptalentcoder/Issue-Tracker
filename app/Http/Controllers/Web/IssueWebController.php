@@ -18,7 +18,7 @@ class IssueWebController extends Controller
         }
 
         if ($request->filled('category')) {
-            $query->where('category', $request->category);
+            $query->whereRaw('lower(category) = ?', [strtolower($request->category)]);
         }
 
         if ($request->filled('priority')) {
@@ -43,9 +43,11 @@ class IssueWebController extends Controller
             'description' => 'required|string|min:10',
             'priority' => 'required|in:low,medium,high,critical',
             'category' => 'required|string|max:100',
-            'status' => 'required|in:open,in_progress,resolved,closed',
             'due_at' => 'nullable|date',
         ]);
+
+        $data['status'] = 'open';
+        $data['due_at'] = $data['due_at'] ?? now();
 
         $automationData = $automation->processIssue($data);
 
@@ -61,5 +63,40 @@ class IssueWebController extends Controller
         return view('issues.show', [
             'issue' => $issue,
         ]);
+    }
+
+    public function edit(Issue $issue)
+    {
+        return view('issues.edit', [
+            'issue' => $issue,
+        ]);
+    }
+
+    public function update(Request $request, Issue $issue, IssueAutomationService $automation)
+    {
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|min:10',
+            'priority' => 'required|in:low,medium,high,critical',
+            'category' => 'required|string|max:100',
+            'status' => 'required|in:open,in_progress,resolved,closed',
+            'due_at' => 'nullable|date',
+        ]);
+
+        $automationData = $automation->processIssue($data);
+        $issue->update(array_merge($data, $automationData));
+
+        return redirect()
+            ->route('issues.show', $issue)
+            ->with('success', 'Issue updated successfully.');
+    }
+
+    public function destroy(Issue $issue)
+    {
+        $issue->delete();
+
+        return redirect()
+            ->route('issues.index')
+            ->with('success', 'Issue deleted successfully.');
     }
 }

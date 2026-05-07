@@ -1,15 +1,17 @@
 @extends('layouts.app')
 
-@section('title', 'Submit Issue')
+@section('title', 'Edit Issue')
 
 @section('content')
     <div class="max-w-3xl">
-        <div class="mb-6">
-            <a href="{{ route('issues.index') }}" class="text-sm font-semibold text-slate-700 hover:text-indigo-700">
-                ← Back to issues
-            </a>
-            <h1 class="mt-2 text-2xl font-semibold tracking-tight">Submit a new issue</h1>
-            <p class="mt-1 text-sm text-slate-600">Provide a clear description so the system can generate a smart summary and next action.</p>
+        <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+                <a href="{{ route('issues.show', $issue) }}" class="text-sm font-semibold text-slate-700 hover:text-indigo-700">
+                    ← Back to issue
+                </a>
+                <h1 class="mt-2 text-2xl font-semibold tracking-tight">Edit issue</h1>
+                <p class="mt-1 text-sm text-slate-600">Update details and change status as the issue progresses.</p>
+            </div>
         </div>
 
         @if ($errors->any())
@@ -23,23 +25,22 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('issues.store') }}"
+        <form method="POST" action="{{ route('issues.update', $issue) }}"
               class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             @csrf
+            @method('PUT')
 
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <label class="block sm:col-span-2">
                     <span class="text-xs font-semibold text-slate-700">Title</span>
-                    <input type="text" name="title" value="{{ old('title') }}" required
-                           class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-                           placeholder="Short and descriptive title">
+                    <input type="text" name="title" value="{{ old('title', $issue->title) }}" required
+                           class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30">
                 </label>
 
                 <label class="block sm:col-span-2">
                     <span class="text-xs font-semibold text-slate-700">Description</span>
                     <textarea name="description" rows="7" required
-                              class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-                              placeholder="What happened? What did you expect? Include steps to reproduce if relevant.">{{ old('description') }}</textarea>
+                              class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30">{{ old('description', $issue->description) }}</textarea>
                 </label>
 
                 <label class="block">
@@ -47,7 +48,7 @@
                     <select name="priority" required
                             class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30">
                         @foreach(['low' => 'Low', 'medium' => 'Medium', 'high' => 'High', 'critical' => 'Critical'] as $value => $label)
-                            <option value="{{ $value }}" @selected(old('priority', 'medium') === $value)>{{ $label }}</option>
+                            <option value="{{ $value }}" @selected(old('priority', $issue->priority) === $value)>{{ $label }}</option>
                         @endforeach
                     </select>
                 </label>
@@ -57,21 +58,37 @@
                     <select name="category" required
                             class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30">
                         @foreach(['technical' => 'Technical', 'billing' => 'Billing', 'account' => 'Account', 'operations' => 'Operations'] as $value => $label)
-                            <option value="{{ $value }}" @selected(old('category') === $value)>{{ $label }}</option>
+                            <option value="{{ $value }}" @selected(old('category', strtolower($issue->category)) === $value)>{{ $label }}</option>
                         @endforeach
                     </select>
                 </label>
 
+                <label class="block">
+                    <span class="text-xs font-semibold text-slate-700">Status</span>
+                    <select name="status" required
+                            class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30">
+                        @foreach(['open' => 'Open', 'in_progress' => 'In progress', 'resolved' => 'Resolved', 'closed' => 'Closed'] as $value => $label)
+                            <option value="{{ $value }}" @selected(old('status', $issue->status) === $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </label>
+
+                <label class="block">
+                    <span class="text-xs font-semibold text-slate-700">Due date (optional)</span>
+                    <input type="datetime-local" name="due_at"
+                           value="{{ old('due_at', $issue->due_at ? $issue->due_at->format('Y-m-d\\TH:i') : '') }}"
+                           class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30">
+                </label>
             </div>
 
             <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
-                <a href="{{ route('issues.index') }}"
+                <a href="{{ route('issues.show', $issue) }}"
                    class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
                     Cancel
                 </a>
                 <button type="submit"
                         class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2">
-                    Submit issue
+                    Save changes
                 </button>
             </div>
         </form>
