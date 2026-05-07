@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Web\IssueWebController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [IssueWebController::class, 'index'])->name('issues.index');
+Route::get('/issues/create', [IssueWebController::class, 'create'])->name('issues.create');
+Route::post('/issues', [IssueWebController::class, 'store'])->name('issues.store');
+Route::get('/issues/{issue}', [IssueWebController::class, 'show'])->name('issues.show');
