@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Issue;
 use App\Services\IssueAutomationService;
 use Illuminate\Http\Request;
+use App\Http\Resources\IssueResource;
 
 class IssueController extends Controller
 {
@@ -24,7 +25,9 @@ class IssueController extends Controller
             $query->where('priority', $request->priority);
         }
 
-        return response()->json($query->latest()->get());
+        return IssueResource::collection(
+            $query->latest()->get()
+        );
     }
 
     public function store(Request $request, IssueAutomationService $automation)
@@ -44,12 +47,14 @@ class IssueController extends Controller
 
         $issue = Issue::create(array_merge($data, $automationData));
 
-        return response()->json($issue, 201);
+        return (new IssueResource($issue))
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function show(Issue $issue)
     {
-        return response()->json($issue);
+        return new IssueResource($issue);
     }
 
     public function update(Request $request, Issue $issue, IssueAutomationService $automation)
@@ -68,7 +73,7 @@ class IssueController extends Controller
 
         $issue->update(array_merge($data, $automationData));
 
-        return response()->json($issue);
+        return new IssueResource($issue);
     }
 
     public function destroy(Issue $issue)

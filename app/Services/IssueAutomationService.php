@@ -16,7 +16,8 @@ class IssueAutomationService
 
         $escalationRequired = $this->shouldEscalate(
             $data['priority'],
-            $data['status'] ?? 'open'
+            $data['status'] ?? 'open',
+            $data['due_at'] ?? null
         );
 
         return [
@@ -58,9 +59,17 @@ class IssueAutomationService
 
     private function shouldEscalate(
         string $priority,
-        string $status
+        string $status,
+        ?string $dueAt = null
     ): bool {
-        return in_array($priority, ['high', 'critical'])
-            && $status !== 'resolved';
+        if ($status === 'resolved' || $status === 'closed') {
+            return false;
+        }
+    
+        if (in_array($priority, ['high', 'critical'])) {
+            return true;
+        }
+    
+        return $dueAt !== null && now()->greaterThan($dueAt);
     }
 }
